@@ -23,12 +23,31 @@ class TestTourCtrl(unittest.TestCase):
         box.es = es
 
         etapeCtrl = mock()
-
         tourCtrl = TourCtrl(etapeCtrl)
 
+        # Il faut 5 tours pour baisser les 9 clapets
         when(plateau).sont_tous_baisses().thenReturn(False).thenReturn(False).thenReturn(False).thenReturn(False).thenReturn(True)
 
-        tourCtrl.handle(box)
-
+        self.assertEqual(tourCtrl.handle(box),True)
 
         verify(etapeCtrl,times=5).handle(box)
+
+    def test_on_est_bloque_alors_le_tour_fini_sans_vainqueur(self):
+        plateau = mock()
+        die = mock()
+        es = mock()
+        box = mock()
+
+        box.plateau = plateau
+        box.die = die
+        box.es = es
+
+        etapeCtrl = mock()
+        tourCtrl = TourCtrl(etapeCtrl)
+
+        when(plateau).sont_tous_baisses().thenReturn(False)
+        when(etapeCtrl).handle(box).thenReturn(True)
+
+        self.assertEqual(tourCtrl.handle(box),False)
+
+        verify(etapeCtrl).handle(box)

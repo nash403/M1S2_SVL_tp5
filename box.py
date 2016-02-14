@@ -41,7 +41,18 @@ class Box:
     def get_score_joueur(self,joueur):
         return self.score_joueurs[joueur]
 
-    # def joue(self):
-    #     for i in range(0,10):
-    #         if self.tourCtrl.handle(self):
-    #             return True
+    def incremente_score(self,joueur,points):
+        if points <= 0:
+            raise ScoreFormatError()
+        self.score_joueurs[joueur] += points
+
+    def joue(self):
+        for i in range(0,10):
+            if self.tourCtrl.handle(self): # jeu terminé
+                self.es.notifie_vainqueur(self.score_joueurs)
+                return
+        self.es.notifie_vainqueur(self.score_joueurs)
+
+
+class ScoreFormatError(Exception):
+    pass

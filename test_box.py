@@ -19,12 +19,6 @@ Auteurs : Honore Nintunze et Antonin Durey
 
 
 
-# classe principale Box
-# + Plateau
-#   + Clapet
-# + Die
-# + ES
-
 import unittest
 from io import StringIO as sio
 from mockito import *
@@ -32,7 +26,7 @@ from box import *
 
 class TestBox(unittest.TestCase):
 
-    def test_initialiser_partie(self):
+    def test_creer_une_box_initialise_la_partie(self):
         plateau = mock()
         die = mock()
         es = mock()
@@ -60,18 +54,68 @@ class TestBox(unittest.TestCase):
         box.switch_player()
         self.assertEqual(box.joueur_courant,JOUEUR_1)
 
+    def test_incrementer_score_se_fait_correctement(self):
+        plateau = mock()
+        die = mock()
+        es = mock()
+        tourCtrl = mock()
+        box = Box(plateau, tourCtrl, die, es)
 
+        JOUEUR_1 = "joueur1"
+        JOUEUR_2 = "joueur2"
 
-    # def test_demander_saisie_nombre_de_des_renvoie_le_nombre_demande(self):
-    #     plateau = mock()
-    #     die = mock()
-    #     es = mock()
-    #     box = mock(plateau, die, es)
-    #
-    #     etapeCtrl = EtapeCtrl()
-    #     etapeCtrl.
-    #
-    #
-    #     SAISIE_USER = "2\n"
-    #
-    #     self.assertEqual(box.)
+        SCORE_A_AJOUTER_1 = 10
+        SCORE_A_AJOUTER_2 = 14
+
+        box.incremente_score(JOUEUR_1,SCORE_A_AJOUTER_1)
+        box.incremente_score(JOUEUR_2,SCORE_A_AJOUTER_2)
+
+        self.assertEqual(box.get_score_joueur(JOUEUR_1),SCORE_A_AJOUTER_1)
+        self.assertEqual(box.get_score_joueur(JOUEUR_2),SCORE_A_AJOUTER_2)
+
+        box.incremente_score(JOUEUR_1,SCORE_A_AJOUTER_2)
+        box.incremente_score(JOUEUR_2,SCORE_A_AJOUTER_1)
+
+        self.assertEqual(box.get_score_joueur(JOUEUR_1),SCORE_A_AJOUTER_1+SCORE_A_AJOUTER_2)
+        self.assertEqual(box.get_score_joueur(JOUEUR_2),SCORE_A_AJOUTER_2+SCORE_A_AJOUTER_1)
+
+    def test_incrementer_score_non_superieur_a_zero_genere_une_erreur(self):
+        plateau = mock()
+        die = mock()
+        es = mock()
+        tourCtrl = mock()
+        box = Box(plateau, tourCtrl, die, es)
+
+        JOUEUR_1 = "joueur1"
+
+        SCORE_A_AJOUTER = -10
+
+        self.assertRaises(ScoreFormatError, box.incremente_score,JOUEUR_1,SCORE_A_AJOUTER)
+
+    def test_joue_notifie_vainqueur_apres_10_tour_de_jeu(self):
+        plateau = mock()
+        die = mock()
+        es = mock()
+        tourCtrl = mock()
+        box = Box(plateau, tourCtrl, die, es)
+
+        # tourCtrl.handle va retourner 10 fois False
+        when(tourCtrl).handle(box).thenReturn(False)
+
+        box.joue()
+        verify(tourCtrl,times=10).handle(box)
+        verify(es).notifie_vainqueur(box.score_joueurs)
+
+    def test_joue_notifie_vainqueur_des_que_tous_les_clapets_sont_fermes(self):
+        plateau = mock()
+        die = mock()
+        es = mock()
+        tourCtrl = mock()
+        box = Box(plateau, tourCtrl, die, es)
+
+        # Au 2 ème tour, tous les clapets sont fermés
+        when(tourCtrl).handle(box).thenReturn(False).thenReturn(True)
+
+        box.joue()
+        verify(tourCtrl,times=2).handle(box)
+        verify(es).notifie_vainqueur(box.score_joueurs)

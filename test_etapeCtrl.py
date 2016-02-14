@@ -11,234 +11,109 @@ from etapeCtrl import *
 
 class TestEtapeCtrl(unittest.TestCase):
 
-
-
-    # def test_ne_peut_pas_lancer_un_de(self):
-    #     plateau = mock()
-    #     die = mock()
-    #     es = mock()
-    #     tourCtrl = mock()
-    #     box = Box(plateau, tourCtrl, die, es)
-    #
-    #     # Il faut au moins un des clapets levé pour être obligé de lancer les 2 dés
-    #     when(plateau).auMoinsUnEstLeve(7,8,9).thenReturn(True)
-    #
-    #     self.assertEqual(box.peut_lancer_un_de(), False)
-    #
-    # def test_peut_lancer_un_de(self):
-    #     plateau = mock()
-    #     die = mock()
-    #     es = mock()
-    #     tourCtrl = mock()
-    #     box = Box(plateau, tourCtrl, die, es)
-    #
-    #     # Il faut au moins un des clapets levé pour être obligé de lancer les 2 dés
-    #     when(plateau).auMoinsUnEstLeve(7, 8, 9).thenReturn(False)
-    #
-    #     self.assertEqual(box.peut_lancer_un_de(), True)
-
-
-
-    def test_jouer_une_etape_2_des_on_ferme_les_clapets_demandes(self):
+    def test_nb_lancers_si_clapet_7_8_9_pas_tous_baisses_egal_2(self):
         plateau = mock()
         die = mock()
         es = mock()
         box = mock()
 
         box.plateau = plateau
-        box.die = die
+
+        etapeCtrl = EtapeCtrl()
+
+        when(plateau).auMoinsUnEstLeve(7, 8, 9).thenReturn(True)
+
+        self.assertEqual(etapeCtrl.get_nombre_lancers(box),2)
+
+    def test_nb_lancers_si_clapet_7_8_9_tous_baisses_egal_1_ou_2(self):
+        plateau = mock()
+        die = mock()
+        es = mock()
+        box = mock()
+
+        box.plateau = plateau
         box.es = es
 
         etapeCtrl = EtapeCtrl()
 
+        VALEUR_SAISIE = 1
 
-        CLAPETS_A_FERMER = [3, 4]
-        SOMME_DES = 7
+        when(plateau).auMoinsUnEstLeve(7, 8, 9).thenReturn(False)
+        when(es).get_nombre_lancers().thenReturn(VALEUR_SAISIE)
 
-        CLAPETS_TOUS_FERMES = False
+        self.assertEqual(etapeCtrl.get_nombre_lancers(box),VALEUR_SAISIE)
+
+    def test_nb_lancers_si_clapet_7_8_9_tous_baisses_egal_1_ou_2_et_on_redemande_tant_que_saisie_differente(self):
+        plateau = mock()
+        die = mock()
+        es = mock()
+        box = mock()
+
+        box.plateau = plateau
+        box.es = es
+
+        etapeCtrl = EtapeCtrl()
+
+        VALEUR_SAISIE = 1
+        MAUVAISE_SAISIE = 3
+
+        when(plateau).auMoinsUnEstLeve(7, 8, 9).thenReturn(False)
+        when(es).get_nombre_lancers().thenRaise(ValueError).thenReturn(MAUVAISE_SAISIE).thenReturn(VALEUR_SAISIE)
+
+        self.assertEqual(etapeCtrl.get_nombre_lancers(box),VALEUR_SAISIE)
+
+        verify(es,times=3).get_nombre_lancers()
+
+    def test_get_clapet_a_fermer_redemande_tant_que_un_des_clapets_demandes_est_deja_baisse(self):
+        plateau = mock()
+        die = mock()
+        es = mock()
+        box = mock()
+
+        box.plateau = plateau
+        box.es = es
+
+        etapeCtrl = EtapeCtrl()
+
+        CLAPETS_1 = [2,4]
+        CLAPETS_2 = [3,3]
+        CLAPETS_3 = [1,5]
+
+        when(es).get_clapets_a_fermer().thenReturn(CLAPETS_1).thenReturn(CLAPETS_2).thenReturn(CLAPETS_3)
+        when(plateau).sont_tous_leves(CLAPETS_1).thenReturn(False)
+        when(plateau).sont_tous_leves(CLAPETS_2).thenReturn(False)
+        when(plateau).sont_tous_leves(CLAPETS_3).thenReturn(True)
+
+        self.assertEqual(etapeCtrl.get_clapets_a_fermer(box),CLAPETS_3)
+        verify(es,times=3).get_clapets_a_fermer()
+        verify(plateau).sont_tous_leves(CLAPETS_1)
+        verify(plateau).sont_tous_leves(CLAPETS_2)
+        verify(plateau).sont_tous_leves(CLAPETS_3)
+
+    def test_si_le_joueur_n_est_pas_bloque_on_renvoie_False_et_on_a_ferme_les_clapets(self):
+        plateau = mock()
+        die = mock()
+        es = mock()
+        box = mock()
+
+        box.plateau = plateau
+        box.es = es
+        box.die = die
+
+        etapeCtrl = EtapeCtrl()
+
+        CLAPETS_A_FERMER = [1,5]
+        RESULTAT_DE = 6
+        NB_LANCERS = 2
 
         when(plateau).auMoinsUnEstLeve(7,8,9).thenReturn(True)
-        when(die).lance(2).thenReturn(SOMME_DES)
-
+        self.assertEqual(etapeCtrl.get_nombre_lancers(box),NB_LANCERS)
+        when(die).lance(NB_LANCERS).thenReturn(RESULTAT_DE)
+        when(plateau).est_bloque(RESULTAT_DE).thenReturn(False)
         when(es).get_clapets_a_fermer().thenReturn(CLAPETS_A_FERMER)
+        when(plateau).sont_tous_leves(CLAPETS_A_FERMER).thenReturn(True)
 
-        when(plateau).est_bloque(SOMME_DES).thenReturn(False);
-        when(plateau).sontTousLeves(CLAPETS_A_FERMER).thenReturn(True)
-        when(plateau).ferme(CLAPETS_A_FERMER).thenReturn(CLAPETS_TOUS_FERMES)
+        self.assertEqual(etapeCtrl.handle(box), False)
 
-        etapeCtrl.handle(box)
-
-        verify(es).notifie_resultat_des_et_choisir_clapets_a_fermer(SOMME_DES)
-        verify(die).lance(2)
-        verify(plateau).ferme(CLAPETS_A_FERMER)
-
-    def test_jouer_une_etape_2_des_et_tous_les_clapets_sont_fermes(self):
-        plateau = mock()
-        die = mock()
-        es = mock()
-        box = mock()
-
-        box.plateau = plateau
-        box.die = die
-        box.es = es
-
-        etapeCtrl = EtapeCtrl()
-
-        CLAPETS_A_FERMER = [7]
-        SOMME_DES = 7
-
-        CLAPETS_TOUS_FERMES = True
-
-        when(plateau).auMoinsUnEstLeve(7,8,9).thenReturn(True)
-        when(die).lance(2).thenReturn(SOMME_DES)
-
-        when(es).get_clapets_a_fermer().thenReturn(CLAPETS_A_FERMER)
-
-        when(plateau).est_bloque(SOMME_DES).thenReturn(False);
-        when(plateau).sontTousLeves(CLAPETS_A_FERMER).thenReturn(True)
-        when(plateau).ferme(CLAPETS_A_FERMER).thenReturn(CLAPETS_TOUS_FERMES)
-
-        etapeCtrl.handle(box)
-
-        verify(es).notifie_resultat_des_et_choisir_clapets_a_fermer(SOMME_DES)
-        verify(die).lance(2)
-        verify(plateau).ferme(CLAPETS_A_FERMER)
-
-    def test_jouer_une_etape_2_des_clapets_a_femer_non_conformes_une_fois(self):
-        # On teste le cas où la première saisie est erroné, mais la seconde est bonne
-        plateau = mock()
-        die = mock()
-        es = mock()
-        box = mock()
-
-        box.plateau = plateau
-        box.die = die
-        box.es = es
-
-        etapeCtrl = EtapeCtrl()
-
-        CLAPETS_A_FERMER_FAUX = [3,4]
-        CLAPETS_A_FERMER_VRAI = [7]
-        SOMME_DES = 7
-
-        CLAPETS_TOUS_FERMES = True
-
-        when(plateau).auMoinsUnEstLeve(7,8,9).thenReturn(True)
-        when(die).lance(2).thenReturn(SOMME_DES)
-
-        when(es).get_clapets_a_fermer().thenReturn(CLAPETS_A_FERMER_FAUX).thenReturn(CLAPETS_A_FERMER_VRAI)
-
-        when(plateau).est_bloque(SOMME_DES).thenReturn(False);
-        when(plateau).sontTousLeves(CLAPETS_A_FERMER_FAUX).thenReturn(False)
-        when(plateau).sontTousLeves(CLAPETS_A_FERMER_VRAI).thenReturn(True)
-
-        when(plateau).ferme(CLAPETS_A_FERMER_VRAI).thenReturn(CLAPETS_TOUS_FERMES)
-
-        etapeCtrl.handle(box)
-
-        verify(es).notifie_resultat_des_et_choisir_clapets_a_fermer(SOMME_DES)
-        verify(die).lance(2)
-        verify(plateau).ferme(CLAPETS_A_FERMER_VRAI)
-
-    def test_jouer_une_etape_1_de_on_ferme_les_clapets_demandes(self):
-        plateau = mock()
-        die = mock()
-        es = mock()
-        box = mock()
-
-        box.plateau = plateau
-        box.die = die
-        box.es = es
-
-        etapeCtrl = EtapeCtrl()
-
-        CLAPETS_A_FERMER = [2, 1]
-        SOMME_DES = 3
-        NOMBRE_LANCERS_DES = 1
-
-        CLAPETS_TOUS_FERMES = False
-
-        when(plateau).auMoinsUnEstLeve(7,8,9).thenReturn(False)
-        when(es).get_nombre_lancers().thenReturn(NOMBRE_LANCERS_DES)
-        when(die).lance(NOMBRE_LANCERS_DES).thenReturn(SOMME_DES)
-
-        when(es).get_clapets_a_fermer().thenReturn(CLAPETS_A_FERMER)
-
-        when(plateau).est_bloque(SOMME_DES).thenReturn(False);
-        when(plateau).sontTousLeves(CLAPETS_A_FERMER).thenReturn(True)
-        when(plateau).ferme(CLAPETS_A_FERMER).thenReturn(CLAPETS_TOUS_FERMES)
-
-        etapeCtrl.handle(box)
-
-        verify(es).notifie_resultat_des_et_choisir_clapets_a_fermer(SOMME_DES)
-        verify(die).lance(NOMBRE_LANCERS_DES)
-        verify(plateau).ferme(CLAPETS_A_FERMER)
-
-    def test_jouer_une_etape_nombre_de_faux_la_premiere_fois_puis_1_de_on_ferme_les_clapets_demandes(self):
-        plateau = mock()
-        die = mock()
-        es = mock()
-        box = mock()
-
-        box.plateau = plateau
-        box.die = die
-        box.es = es
-
-        etapeCtrl = EtapeCtrl()
-
-        CLAPETS_A_FERMER = [2, 1]
-        SOMME_DES = 3
-        NOMBRE_LANCERS_DES_FAUX = 5
-        NOMBRE_LANCERS_DES_VRAI = 1
-
-        CLAPETS_TOUS_FERMES = False
-
-        when(plateau).auMoinsUnEstLeve(7,8,9).thenReturn(False)
-        when(es).get_nombre_lancers().thenReturn(NOMBRE_LANCERS_DES_FAUX).thenReturn(NOMBRE_LANCERS_DES_VRAI)
-        when(die).lance(NOMBRE_LANCERS_DES_VRAI).thenReturn(SOMME_DES)
-
-        when(es).get_clapets_a_fermer().thenReturn(CLAPETS_A_FERMER)
-
-        when(plateau).est_bloque(SOMME_DES).thenReturn(False);
-        when(plateau).sontTousLeves(CLAPETS_A_FERMER).thenReturn(True)
-        when(plateau).ferme(CLAPETS_A_FERMER).thenReturn(CLAPETS_TOUS_FERMES)
-
-        etapeCtrl.handle(box)
-
-        verify(es).notifie_resultat_des_et_choisir_clapets_a_fermer(SOMME_DES)
-        verify(die).lance(NOMBRE_LANCERS_DES_VRAI)
-        verify(plateau).ferme(CLAPETS_A_FERMER)
-
-    def test_jouer_une_etape_nombre_de_pas_un_entier_la_premiere_fois_puis_1_de_on_ferme_les_clapets_demandes(self):
-        plateau = mock()
-        die = mock()
-        es = mock()
-        box = mock()
-
-        box.plateau = plateau
-        box.die = die
-        box.es = es
-
-        etapeCtrl = EtapeCtrl()
-
-        CLAPETS_A_FERMER = [2, 1]
-        SOMME_DES = 3
-        NOMBRE_LANCERS_DES_VRAI = 1
-
-        CLAPETS_TOUS_FERMES = False
-
-        when(plateau).auMoinsUnEstLeve(7,8,9).thenReturn(False)
-        when(es).get_nombre_lancers().thenRaise(ValueError).thenReturn(NOMBRE_LANCERS_DES_VRAI)
-        when(die).lance(NOMBRE_LANCERS_DES_VRAI).thenReturn(SOMME_DES)
-
-        when(es).get_clapets_a_fermer().thenReturn(CLAPETS_A_FERMER)
-
-        when(plateau).est_bloque(SOMME_DES).thenReturn(False);
-        when(plateau).sontTousLeves(CLAPETS_A_FERMER).thenReturn(True)
-        when(plateau).ferme(CLAPETS_A_FERMER).thenReturn(CLAPETS_TOUS_FERMES)
-
-        etapeCtrl.handle(box)
-
-        verify(es).notifie_resultat_des_et_choisir_clapets_a_fermer(SOMME_DES)
-        verify(die).lance(NOMBRE_LANCERS_DES_VRAI)
+        verify(es).notifie_resultat_de(RESULTAT_DE)
         verify(plateau).ferme(CLAPETS_A_FERMER)
