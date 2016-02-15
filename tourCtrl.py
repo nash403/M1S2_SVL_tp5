@@ -16,4 +16,8 @@ class TourCtrl:
             fin = self.etapeCtrl.handle(box) # False si le tour n'est pas fini donc si on est pas bloqué
             if box.plateau.sont_tous_baisses():
                 return True # jeu gagné
+
+	
         return False # le tour est fini sans vainqueur
+
+

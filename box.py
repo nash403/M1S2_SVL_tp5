@@ -20,39 +20,45 @@ Auteurs : Honore Nintunze et Antonin Durey
 
 class Box:
 
-    def __init__(self, plateau, tourCtrl, die, es):
-        self.plateau = plateau
-        self.tourCtrl = tourCtrl
-        self.die = die
-        self.es = es
-        self.init()
+	def __init__(self, plateau, tourCtrl, die, es):
+		self.plateau = plateau
+		self.tourCtrl = tourCtrl
+		self.die = die
+		self.es = es
+		self.init()
 
 
-    def init(self):
-        self.score_joueurs = {'joueur1':0, 'joueur2': 0}
-        self.joueur_courant = "joueur1"
+	def init(self):
+		self.score_joueurs = {'joueur1':0, 'joueur2': 0}
+		self.joueur_courant = "joueur1"
 
-    def switch_player(self):
-        if self.joueur_courant == "joueur1":
-            self.joueur_courant = "joueur2"
-        else:
-            self.joueur_courant = "joueur1"
+	def switch_player(self):
+		if self.joueur_courant == "joueur1":
+			self.joueur_courant = "joueur2"
+		else:
+			self.joueur_courant = "joueur1"
 
-    def get_score_joueur(self,joueur):
-        return self.score_joueurs[joueur]
+	def get_score_joueur(self,joueur):
+		return self.score_joueurs[joueur]
 
-    def incremente_score(self,joueur,points):
-        if points <= 0:
-            raise ScoreFormatError()
-        self.score_joueurs[joueur] += points
+	def incremente_score(self,joueur,points):
+		if points <= 0:
+			raise ScoreFormatError()
+		self.score_joueurs[joueur] += points
 
-    def joue(self):
-        for i in range(0,10):
-            if self.tourCtrl.handle(self): # jeu terminé
-                self.es.notifie_vainqueur(self.score_joueurs)
-                return
-        self.es.notifie_vainqueur(self.score_joueurs)
+	def joue(self):
+		keys = list(self.score_joueurs.keys())
+		for i in range(0,10):
+			for joueur in keys:
+				self.joueur_courant = joueur
+				if self.tourCtrl.handle(self): # jeu terminé
+					print(self.joueur_courant)
+					self.es.notifie_vainqueur_par_ko(self.joueur_courant)
+					return
+				else:
+					self.incremente_score(self.joueur_courant, self.plateau.valeur_clapets_leves())
+		self.es.notifie_vainqueur_par_score(self.score_joueurs)
 
 
 class ScoreFormatError(Exception):
-    pass
+	pass

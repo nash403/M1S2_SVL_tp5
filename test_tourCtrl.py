@@ -32,7 +32,7 @@ class TestTourCtrl(unittest.TestCase):
 
         verify(etapeCtrl,times=5).handle(box)
 
-    def test_on_est_bloque_alors_le_tour_fini_sans_vainqueur(self):
+    def test_on_est_bloque_alors_le_tour_est_fini(self):
         plateau = mock()
         die = mock()
         es = mock()
