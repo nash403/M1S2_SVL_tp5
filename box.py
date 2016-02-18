@@ -47,12 +47,12 @@ class Box:
 		self.score_joueurs[joueur] += points
 
 	def joue(self):
-		keys = list(self.score_joueurs.keys())
+		keys = sorted(list(self.score_joueurs.keys()))
 		for i in range(0,10):
 			for joueur in keys:
 				self.joueur_courant = joueur
+
 				if self.tourCtrl.handle(self): # jeu terminé
-					print(self.joueur_courant)
 					self.es.notifie_vainqueur_par_ko(self.joueur_courant)
 					return
 				else:

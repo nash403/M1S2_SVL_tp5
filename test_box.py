@@ -114,7 +114,7 @@ class TestBox(unittest.TestCase):
 		tourCtrl = mock()
 		box = Box(plateau, tourCtrl, die, es)
 		JOUEUR_VAINQUEUR = 'joueur1'
-		VALEUR_SANS_IMPORTANCE = 5
+
 		# Dès son premier tour, le premier joueur arrive à tout fermer
 		when(tourCtrl).handle(box).thenReturn(True)
 
